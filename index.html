@@ -35,7 +35,7 @@
             box-sizing: border-box;
         }
 
-        body {
+        body { overflow-x: hidden; width: 100%; 
             font-family: 'Inter', system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
@@ -1246,6 +1246,7 @@
                 },
                 mounted: async function () {
                     if (localStorage.getItem('theme') === 'light') { this.isDark = false; document.body.classList.add('light'); }
+                    if (localStorage.getItem('activeTab')) { this.tab = localStorage.getItem('activeTab'); }
                     try { await this.loadData(); } catch (e) { console.error('Init error:', e); this.status = 'Hata!'; }
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('app').style.display = 'block';
