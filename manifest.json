@@ -1,0 +1,21 @@
+{
+  "name": "Doğuş Taksi Panel",
+  "short_name": "Taksi Panel",
+  "description": "Doğuş Taksi Operasyon ve Yönetim Merkezi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0e1a",
+  "theme_color": "#06b6d4",
+  "icons": [
+    {
+      "src": "https://beylikduzukorsantaksi.name.tr/media/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://beylikduzukorsantaksi.name.tr/media/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

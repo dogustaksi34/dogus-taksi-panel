@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Doğuş Taksi — Kontrol Merkezi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- PWA (Uygulama) Ayarları -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#06b6d4">
+    <link rel="apple-touch-icon" href="https://beylikduzukorsantaksi.name.tr/media/logo.png">
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #1e293b;
+            --surface3: #273548;
+            --accent: #06b6d4;
+            --accent2: #8b5cf6;
+            --accent3: #f59e0b;
+            --text: #f1f5f9;
+            --text2: #94a3b8;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body.light {
+            --bg: #f0f4f8;
+            --surface: #fff;
+            --surface2: #f1f5f9;
+            --surface3: #e2e8f0;
+            --text: #0f172a;
+            --text2: #475569;
+            --border: #cbd5e1;
+            --accent: #0891b2;
+            --accent2: #7c3aed;
+        }
+
+        /* Loader */
+        .loader-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity .5s;
+        }
+
+        .loader-screen.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .main {
+            margin-left: 220px;
+            flex: 1;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* Navigation */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            margin: 2px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: .85rem;
+            font-weight: 500;
+            color: var(--text2);
+            transition: all .2s;
+        }
+
+        .nav-item:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(6, 182, 212, .15), rgba(139, 92, 246, .15));
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .nav-item i {
+            width: 18px;
+            text-align: center;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, .2);
+        }
+
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            opacity: .1;
+        }
+
+        .stat-card.cyan::before {
+            background: var(--accent);
+        }
+
+        .stat-card.green::before {
+            background: var(--success);
+        }
+
+        .stat-card.purple::before {
+            background: var(--accent2);
+        }
+
+        .stat-card.amber::before {
+            background: var(--accent3);
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 6px;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 8px 12px;
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--text2);
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 10px 12px;
+            background: var(--surface);
+            font-size: .85rem;
+        }
+
+        .data-table tr td:first-child {
+            border-radius: 10px 0 0 10px;
+        }
+
+        .data-table tr td:last-child {
+            border-radius: 0 10px 10px 0;
+        }
+
+        .data-table tr:hover td {
+            background: var(--surface2);
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: .7rem;
+            font-weight: 700;
+        }
+
+        .badge.cyan {
+            background: rgba(6, 182, 212, .15);
+            color: #06b6d4;
+        }
+
+        .badge.green {
+            background: rgba(34, 197, 94, .15);
+            color: #22c55e;
+        }
+
+        .badge.red {
+            background: rgba(239, 68, 68, .15);
+            color: #ef4444;
+        }
+
+        .badge.amber {
+            background: rgba(245, 158, 11, .15);
+            color: #f59e0b;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-body {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        /* Bottom nav (mobile) */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            z-index: 200;
+            padding: 6px 0 env(safe-area-inset-bottom);
+        }
+
+        .bnav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 6px;
+            font-size: .65rem;
+            font-weight: 600;
+            color: var(--text2);
+            cursor: pointer;
+        }
+
+        .bnav-item.active {
+            color: var(--accent);
+        }
+
+        .bnav-item i {
+            font-size: 1.1rem;
+        }
+
+        /* Utilities */
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .flex-between {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+
+        .p-20 {
+            padding: 20px;
+        }
+
+        .p-12 {
+            padding: 12px;
+        }
+
+        .text-sm {
+            font-size: .85rem;
+        }
+
+        .text-xs {
+            font-size: .75rem;
+        }
+
+        .fw-700 {
+            font-weight: 700;
+        }
+
+        .fw-800 {
+            font-weight: 800;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-anim 2s infinite;
+        }
+
+        @keyframes pulse-anim {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        /* Chart container */
+        .chart-box {
+            position: relative;
+            height: 250px;
+        }
+
+        /* Search */
+        .search-input {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: .8rem;
+            color: var(--text);
+            outline: none;
+            width: 200px;
+        }
+
+        .btn-icon {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: .8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-icon:hover {
+            opacity: .9;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        /* Responsive */
+        @media (max-width:768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 16px;
+                padding-bottom: 80px;
+            }
+
+            .bottom-nav {
+                display: flex;
+                justify-content: space-around;
+            }
+
+            .grid-4 {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .search-input {
+                width: 120px;
+            }
+
+            .modal-body {
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- LOADER -->
+    <div id="loader" class="loader-screen">
+        <div class="spinner"></div>
+        <span style="color:var(--text2);font-size:.875rem" id="loader-msg">Veriler yükleniyor...</span>
+    </div>
+
+    <!-- APP -->
+    <div id="app" style="display:none">
+        <div class="app-container">
+
+            <!-- SIDEBAR -->
+            <aside class="sidebar">
+                <div style="padding:20px 16px;border-bottom:1px solid var(--border)">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <div
+                            style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#06b6d4,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1rem">
+                            🚖</div>
+                        <div>
+                            <div style="font-weight:700;font-size:.9rem">Doğuş Taksi</div>
+                            <div style="font-size:.7rem;color:var(--text2)">Kontrol Merkezi</div>
+                        </div>
+                    </div>
+                </div>
+                <nav style="flex:1;padding:12px 8px;display:flex;flex-direction:column;gap:2px">
+                    <div class="nav-item" :class="{active:tab==='calls'}" @click="tab='calls'"><i
+                            class="fas fa-phone"></i> Çağrılar</div>
+                    <div class="nav-item" :class="{active:tab==='customers'}" @click="tab='customers'"><i
+                            class="fas fa-users"></i> Müşteriler</div>
+                    <div class="nav-item" :class="{active:tab==='prices'}" @click="tab='prices'"><i
+                            class="fas fa-tag"></i> Fiyat Listesi</div>
+                    <div class="nav-item" :class="{active:tab==='learned'}" @click="tab='learned'"><i
+                            class="fas fa-brain"></i> Öğrenilen</div>
+                    <div class="nav-item" :class="{active:tab==='reports'}" @click="tab='reports'"><i
+                            class="fas fa-chart-bar"></i> Raporlar</div>
+                    <div class="nav-item" :class="{active:tab==='ai'}" @click="tab='ai'"><i class="fas fa-robot"></i> AI
+                        Analiz</div>
+                </nav>
+                <div style="padding:12px 16px;border-top:1px solid var(--border)">
+                    <div class="nav-item" @click="toggleTheme"><i :class="isDark?'fas fa-sun':'fas fa-moon'"></i>
+                        {{isDark?'Açık':'Koyu'}} Tema</div>
+                </div>
+            </aside>
+
+            <!-- MAIN -->
+            <main class="main">
+                <!-- HEADER -->
+                <div class="flex-between mb-20">
+                    <div>
+                        <h1 style="font-size:1.5rem;font-weight:800;letter-spacing:-.02em">
+                            <span v-if="tab==='calls'">📞 Çağrılar</span>
+                            <span v-if="tab==='customers'">👥 Müşteriler</span>
+                            <span v-if="tab==='prices'">💰 Fiyat Listesi</span>
+                            <span v-if="tab==='learned'">🧠 Öğrenilen Fiyatlar</span>
+                            <span v-if="tab==='reports'">📊 Raporlar</span>
+                            <span v-if="tab==='ai'">🤖 AI Analiz</span>
+                        </h1>
+                        <p style="font-size:.8rem;color:var(--text2);margin-top:2px">
+                            <span class="pulse"></span>
+                            {{calls.length}} çağrı · {{customers.length}} müşteri · {{status}}
+                        </p>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <input v-model="search" type="text" placeholder="Ara..." class="search-input">
+                        <button @click="loadData" class="btn-icon"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                </div>
+
+                <!-- ===== CALLS TAB ===== -->
+                <div v-if="tab==='calls'">
+                    <div class="grid-4 mb-20">
+                        <div class="card stat-card cyan p-20">
+                            <div class="text-xs fw-700" style="color:var(--text2)">Toplam Çağrı</div>
+                            <div style="font-size:1.8rem" class="fw-800">{{calls.length}}</div>
+                        </div>
+                        <div class="card stat-card green p-20">
+                            <div class="text-xs fw-700" style="color:var(--text2)">Ort. Puan</div>
+                            <div style="font-size:1.8rem" class="fw-800">{{avgScore}}</div>
+                        </div>
+                        <div class="card stat-card purple p-20">
+                            <div class="text-xs fw-700" style="color:var(--text2)">Toplam Gelir</div>
+                            <div style="font-size:1.8rem" class="fw-800">₺{{totalRevenue}}</div>
+                        </div>
+                        <div class="card stat-card amber p-20">
+                            <div class="text-xs fw-700" style="color:var(--text2)">Bugün</div>
+                            <div style="font-size:1.8rem" class="fw-800">{{todayCalls}}</div>
+                        </div>
+                    </div>
+                    <div class="card" style="overflow-x:auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Telefon</th>
+                                    <th>Kalkış</th>
+                                    <th>Varış</th>
+                                    <th>Ücret</th>
+                                    <th>Puan</th>
+                                    <th>Ses</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="c in filteredCalls" :key="c.id" @click="selectedCall=c"
+                                    style="cursor:pointer">
+                                    <td>{{formatDate(c.created_at)}}</td>
+                                    <td class="fw-700">{{c.musteri_telefon||'-'}}</td>
+                                    <td><span style="color:var(--accent)">{{c.kalkis_yeri||'-'}}</span></td>
+                                    <td><span style="color:var(--accent3)">{{c.varis_yeri||'-'}}</span></td>
+                                    <td class="fw-700" style="color:var(--success)">{{c.ucret ? c.ucret+'₺' : '-'}}</td>
+                                    <td><span class="badge"
+                                            :class="(c.genel_puan||0)>=7?'green':(c.genel_puan||0)>=4?'amber':'red'">⭐{{c.genel_puan||'-'}}</span>
+                                    </td>
+                                    <td><button v-if="c.ses_kaydi_url" @click.stop="playAudio(c.ses_kaydi_url)"
+                                            style="background:var(--accent);border:none;color:#000;padding:4px 10px;border-radius:8px;cursor:pointer;font-size:.75rem"><i
+                                                class="fas fa-play"></i></button><span v-else
+                                            style="opacity:.3">-</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="filteredCalls.length===0" style="padding:40px;text-align:center;color:var(--text2)">
+                            Henüz çağrı verisi yok</div>
+                    </div>
+                </div>
+
+                <!-- ===== CUSTOMERS TAB ===== -->
+                <div v-if="tab==='customers'">
+                    <div class="grid-3">
+                        <div v-for="c in filteredCustomers" :key="c.id" class="card p-20" @click="selectedCustomer=c"
+                            style="cursor:pointer">
+                            <div class="flex-between mb-20">
+                                <div style="display:flex;align-items:center;gap:10px">
+                                    <div
+                                        style="width:40px;height:40px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center">
+                                        <i class="fas fa-user" style="color:var(--text2)"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-700 text-sm">{{c.telefon}}</div>
+                                        <div class="text-xs" style="color:var(--text2)">Puan: ⭐{{c.puan||5}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid-2" style="gap:8px">
+                                <div style="background:var(--surface2);padding:8px;border-radius:8px">
+                                    <div class="text-xs" style="color:var(--text2)">Son Kalkış</div>
+                                    <div class="text-sm fw-700" style="color:var(--accent)">{{c.son_kalkis||'-'}}</div>
+                                </div>
+                                <div style="background:var(--surface2);padding:8px;border-radius:8px">
+                                    <div class="text-xs" style="color:var(--text2)">Son Varış</div>
+                                    <div class="text-sm fw-700" style="color:var(--accent3)">{{c.son_varis||'-'}}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="filteredCustomers.length===0" style="padding:40px;text-align:center;color:var(--text2)">
+                        Müşteri verisi yok</div>
+                </div>
+
+                <!-- ===== PRICES TAB ===== -->
+                <div v-if="tab==='prices'">
+                    <div class="card" style="overflow-x:auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Kalkış</th>
+                                    <th>Varış</th>
+                                    <th>Fiyat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="p in filteredPrices" :key="p.id">
+                                    <td class="fw-700">{{p.kalkis_bolgesi||'-'}}</td>
+                                    <td>{{p.varis_yeri||'-'}}</td>
+                                    <td class="fw-700" style="color:var(--success)">{{p.fiyat||p.ucret||0}} ₺</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="filteredPrices.length===0" style="padding:40px;text-align:center;color:var(--text2)">
+                            Fiyat verisi yok</div>
+                    </div>
+                </div>
+
+                <!-- ===== LEARNED TAB ===== -->
+                <div v-if="tab==='learned'">
+                    <div class="card" style="overflow-x:auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Kalkış</th>
+                                    <th>Varış</th>
+                                    <th>Fiyat</th>
+                                    <th>Kaynak</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="l in filteredLearned" :key="l.id">
+                                    <td class="text-xs">{{formatDate(l.created_at||l.tarih)}}</td>
+                                    <td class="fw-700">{{l.kalkis_bolgesi||'-'}}</td>
+                                    <td>{{l.varis_yeri||'-'}}</td>
+                                    <td class="fw-700" style="color:var(--success)">{{l.fiyat||0}} ₺</td>
+                                    <td><span class="badge cyan">{{l.kaynak_tipi||'?'}}</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="filteredLearned.length===0"
+                            style="padding:40px;text-align:center;color:var(--text2)">Öğrenilen fiyat yok</div>
+                    </div>
+                </div>
+
+                <!-- ===== REPORTS TAB ===== -->
+                <div v-if="tab==='reports'">
+                    <div class="grid-4 mb-20">
+                        <div class="card stat-card cyan p-20">
+                            <div class="text-xs" style="color:var(--text2)">Toplam Çağrı</div>
+                            <div style="font-size:1.8rem" class="fw-800">{{calls.length}}</div>
+                        </div>
+                        <div class="card stat-card green p-20">
+                            <div class="text-xs" style="color:var(--text2)">Ort. Puan</div>
+                            <div style="font-size:1.8rem" class="fw-800">{{avgScore}}</div>
+                        </div>
+                        <div class="card stat-card purple p-20">
+                            <div class="text-xs" style="color:var(--text2)">Müşteri</div>
+                            <div style="font-size:1.8rem" class="fw-800">{{customers.length}}</div>
+                        </div>
+                        <div class="card stat-card amber p-20">
+                            <div class="text-xs" style="color:var(--text2)">Bugün</div>
+                            <div style="font-size:1.8rem" class="fw-800">{{todayCalls}}</div>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="card p-20">
+                            <h3 class="text-sm fw-700 mb-20">Puan Dağılımı</h3>
+                            <div class="chart-box"><canvas id="scoreChart"></canvas></div>
+                        </div>
+                        <div class="card p-20">
+                            <h3 class="text-sm fw-700 mb-20">Bölge Dağılımı</h3>
+                            <div class="chart-box"><canvas id="regionChart"></canvas></div>
+                        </div>
+                        <div class="card p-20">
+                            <h3 class="text-sm fw-700 mb-20">Saatlik Yoğunluk</h3>
+                            <div class="chart-box"><canvas id="hourlyChart"></canvas></div>
+                        </div>
+                        <div class="card p-20">
+                            <h3 class="text-sm fw-700 mb-20">Günlük Gelir</h3>
+                            <div class="chart-box"><canvas id="revenueChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== AI TAB ===== -->
+                <div v-if="tab==='ai'">
+                    <div class="grid-2">
+                        <div class="card p-20">
+                            <h3 class="text-sm fw-700 mb-20">🔥 Sıcak Bölgeler</h3>
+                            <div v-for="z in aiHotZones.slice(0,10)" :key="z.name" style="margin-bottom:10px">
+                                <div class="flex-between text-xs" style="margin-bottom:4px"><span
+                                        class="fw-700">{{z.name}}</span><span style="color:var(--accent)">{{z.count}}
+                                        çağrı</span></div>
+                                <div style="height:6px;background:var(--surface2);border-radius:3px">
+                                    <div :style="{width:z.pct+'%'}"
+                                        style="height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px">
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-if="aiHotZones.length===0" style="padding:20px;text-align:center;color:var(--text2)">
+                                Veri yok</div>
+                        </div>
+                        <div class="card p-20">
+                            <h3 class="text-sm fw-700 mb-20">🔄 Tekrar Eden Müşteriler</h3>
+                            <div v-for="r in aiReturns.slice(0,10)" :key="r.tel"
+                                style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+                                <div><span class="fw-700 text-sm">{{r.tel}}</span>
+                                    <div class="text-xs" style="color:var(--text2)">{{r.rota}}</div>
+                                </div>
+                                <span class="badge amber">~{{r.gun}} gün</span>
+                            </div>
+                            <div v-if="aiReturns.length===0" style="padding:20px;text-align:center;color:var(--text2)">
+                                Veri yok</div>
+                        </div>
+                        <div class="card p-20">
+                            <h3 class="text-sm fw-700 mb-20">⏰ Saatlik Bölge Yoğunluğu</h3>
+                            <div v-for="h in aiHourly.slice(0,12)" :key="h.hour+h.region"
+                                style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+                                <div><span class="badge cyan">{{h.hour}}:00</span> <span class="fw-700 text-sm"
+                                        style="margin-left:8px">{{h.region}}</span></div>
+                                <span class="text-xs fw-700" style="color:var(--accent3)">{{h.count}} çağrı</span>
+                            </div>
+                        </div>
+                        <div class="card p-20">
+                            <h3 class="text-sm fw-700 mb-20">🎓 Asistan Hata Analizi</h3>
+                            <div v-for="e in aiErrors.slice(0,10)" :key="e.type"
+                                style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+                                <span class="text-sm">{{e.type}}</span>
+                                <span class="badge red">{{e.count}}x</span>
+                            </div>
+                            <div v-if="aiErrors.length===0" style="padding:20px;text-align:center;color:var(--text2)">
+                                Hata verisi yok</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- BOTTOM NAV (Mobile) -->
+        <nav class="bottom-nav">
+            <div class="bnav-item" :class="{active:tab==='calls'}" @click="tab='calls'"><i
+                    class="fas fa-phone"></i>Çağrılar</div>
+            <div class="bnav-item" :class="{active:tab==='customers'}" @click="tab='customers'"><i
+                    class="fas fa-users"></i>Müşteri</div>
+            <div class="bnav-item" :class="{active:tab==='prices'}" @click="tab='prices'"><i
+                    class="fas fa-tag"></i>Fiyatlar</div>
+            <div class="bnav-item" :class="{active:tab==='reports'}" @click="tab='reports'"><i
+                    class="fas fa-chart-bar"></i>Rapor</div>
+            <div class="bnav-item" :class="{active:tab==='ai'}" @click="tab='ai'"><i class="fas fa-robot"></i>AI</div>
+        </nav>
+
+        <!-- CALL DETAIL MODAL -->
+        <div v-if="selectedCall" class="modal-overlay" @click.self="selectedCall=null">
+            <div class="modal-body p-20">
+                <div class="flex-between mb-20">
+                    <h2 style="font-size:1.1rem" class="fw-700">📞 Çağrı Detayı</h2>
+                    <button @click="selectedCall=null"
+                        style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <div class="grid-2 mb-20" style="gap:8px">
+                    <div class="card p-12">
+                        <div class="text-xs" style="color:var(--text2)">Telefon</div>
+                        <div class="fw-700" style="margin-top:2px">{{selectedCall.musteri_telefon}}</div>
+                    </div>
+                    <div class="card p-12">
+                        <div class="text-xs" style="color:var(--text2)">Puan</div>
+                        <div class="fw-700" style="margin-top:2px">⭐ {{selectedCall.genel_puan||'-'}}</div>
+                    </div>
+                    <div class="card p-12">
+                        <div class="text-xs" style="color:var(--text2)">Kalkış</div>
+                        <div class="fw-700" style="margin-top:2px;color:var(--accent)">{{selectedCall.kalkis_yeri||'-'}}
+                        </div>
+                    </div>
+                    <div class="card p-12">
+                        <div class="text-xs" style="color:var(--text2)">Varış</div>
+                        <div class="fw-700" style="margin-top:2px;color:var(--accent3)">{{selectedCall.varis_yeri||'-'}}
+                        </div>
+                    </div>
+                </div>
+                <div v-if="selectedCall.ucret" class="card p-12 mb-20">
+                    <div class="text-xs" style="color:var(--text2)">Fiyat</div>
+                    <div class="fw-800" style="font-size:1.3rem;color:var(--success);margin-top:2px">
+                        {{selectedCall.ucret}} ₺</div>
+                </div>
+                <div v-if="selectedCall.ses_kaydi_url" class="card p-12 mb-20">
+                    <div class="text-xs" style="color:var(--text2);margin-bottom:6px">🎙️ Ses Kaydı</div><audio
+                        :src="selectedCall.ses_kaydi_url" controls preload="none" style="width:100%"></audio>
+                </div>
+                <div v-if="selectedCall.konusma_ozeti" class="card p-12 mb-20">
+                    <div class="text-xs" style="color:var(--text2)">📝 Özet</div>
+                    <div style="margin-top:4px" class="text-sm" style="line-height:1.5">{{selectedCall.konusma_ozeti}}
+                    </div>
+                </div>
+                <div v-if="selectedCall.asistan_icin_ders" class="card p-12"
+                    style="border-left:3px solid var(--accent3)">
+                    <div class="text-xs" style="color:var(--text2)">🎓 Asistan Dersi</div>
+                    <div style="margin-top:4px" class="text-sm">{{selectedCall.asistan_icin_ders}}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CUSTOMER DETAIL MODAL -->
+        <div v-if="selectedCustomer" class="modal-overlay" @click.self="selectedCustomer=null">
+            <div class="modal-body p-20">
+                <div class="flex-between mb-20">
+                    <h2 style="font-size:1.1rem" class="fw-700">👤 Müşteri Profili</h2>
+                    <button @click="selectedCustomer=null"
+                        style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <div class="grid-2 mb-20" style="gap:8px">
+                    <div class="card p-12">
+                        <div class="text-xs" style="color:var(--text2)">Telefon</div>
+                        <div class="fw-700" style="margin-top:2px">{{selectedCustomer.telefon}}</div>
+                    </div>
+                    <div class="card p-12">
+                        <div class="text-xs" style="color:var(--text2)">Puan</div>
+                        <div class="fw-700" style="margin-top:2px">⭐ {{selectedCustomer.puan||5}}</div>
+                    </div>
+                    <div class="card p-12">
+                        <div class="text-xs" style="color:var(--text2)">Son Kalkış</div>
+                        <div class="fw-700" style="margin-top:2px;color:var(--accent)">
+                            {{selectedCustomer.son_kalkis||'-'}}</div>
+                    </div>
+                    <div class="card p-12">
+                        <div class="text-xs" style="color:var(--text2)">Son Varış</div>
+                        <div class="fw-700" style="margin-top:2px;color:var(--accent3)">
+                            {{selectedCustomer.son_varis||'-'}}</div>
+                    </div>
+                </div>
+                <div v-if="selectedCustomer.ozel_notlar" class="card p-12 mb-20">
+                    <div class="text-xs" style="color:var(--text2)">📝 Notlar</div>
+                    <div style="margin-top:4px" class="text-sm">{{selectedCustomer.ozel_notlar}}</div>
+                </div>
+                <div v-if="selectedCustomer.asistan_notu" class="card p-12" style="border-left:3px solid var(--danger)">
+                    <div class="text-xs" style="color:var(--text2)">⚠️ Asistan Notu</div>
+                    <div style="margin-top:4px" class="text-sm" style="white-space:pre-wrap">
+                        {{selectedCustomer.asistan_notu}}</div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /app -->
+
+    <!-- 🔽 ALL SCRIPTS INLINE — NO EXTERNAL JS FILES 🔽 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script>
+        (function () {
+            const SUPABASE_URL = 'https://hpzaevsblftkmizfepjj.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwemFldnNibGZ0a21pemZlcGpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2NTgxOTgsImV4cCI6MjA4MjIzNDE5OH0.jr-AntjkbdAdnaomCX0lkpg_kWu8IhRrrj5UfpsrlwU';
+
+            // Loader safety: always hide after 15s max
+            setTimeout(function () {
+                var l = document.getElementById('loader');
+                if (l && l.style.display !== 'none') {
+                    l.style.display = 'none';
+                    document.getElementById('app').style.display = 'block';
+                    console.warn('Loader timeout — forced show');
+                }
+            }, 15000);
+
+            // Check dependencies
+            if (typeof Vue === 'undefined') {
+                document.getElementById('loader-msg').textContent = '❌ Vue.js yüklenemedi. İnternet bağlantısını kontrol edin.';
+                return;
+            }
+
+            var sb = null;
+            try {
+                if (typeof supabase !== 'undefined' && supabase.createClient) {
+                    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                }
+            } catch (e) {
+                console.warn('Supabase init error:', e);
+            }
+
+            if (!sb) {
+                document.getElementById('loader-msg').textContent = '⚠️ Supabase yüklenemedi — offline mod';
+            }
+
+            // Safe query helper
+            async function safeQuery(table, opts) {
+                if (!sb) return [];
+                try {
+                    var q = sb.from(table).select('*');
+                    if (opts.order) q = q.order(opts.order, { ascending: !!opts.asc });
+                    if (opts.limit) q = q.limit(opts.limit);
+                    var result = await q;
+                    if (result.error) {
+                        console.warn('[' + table + '] error:', result.error.message);
+                        return [];
+                    }
+                    return result.data || [];
+                } catch (e) {
+                    console.warn('[' + table + '] failed:', e);
+                    return [];
+                }
+            }
+
+            var chartInstances = {};
+
+            var vueApp = Vue.createApp({
+                data: function () {
+                    return {
+                        tab: 'calls',
+                        search: '',
+                        isDark: true,
+                        status: 'Bağlanıyor...',
+                        calls: [],
+                        customers: [],
+                        fixedPrices: [],
+                        learnedPrices: [],
+                        selectedCall: null,
+                        selectedCustomer: null
+                    };
+                },
+                computed: {
+                    filteredCalls: function () {
+                        var arr = this.calls.slice();
+                        if (this.search) {
+                            var q = this.search.toLowerCase();
+                            arr = arr.filter(function (c) {
+                                return (c.musteri_telefon || '').toLowerCase().includes(q) ||
+                                    (c.kalkis_yeri || '').toLowerCase().includes(q) ||
+                                    (c.varis_yeri || '').toLowerCase().includes(q) ||
+                                    (c.konusma_ozeti || '').toLowerCase().includes(q);
+                            });
+                        }
+                        return arr;
+                    },
+                    filteredCustomers: function () {
+                        var arr = this.customers.slice();
+                        if (this.search) {
+                            var q = this.search.toLowerCase();
+                            arr = arr.filter(function (c) {
+                                return (c.telefon || '').toLowerCase().includes(q) ||
+                                    (c.son_kalkis || '').toLowerCase().includes(q) ||
+                                    (c.son_varis || '').toLowerCase().includes(q);
+                            });
+                        }
+                        return arr;
+                    },
+                    filteredPrices: function () {
+                        var arr = this.fixedPrices.slice();
+                        if (this.search) {
+                            var q = this.search.toLowerCase();
+                            arr = arr.filter(function (p) {
+                                return (p.kalkis_bolgesi || '').toLowerCase().includes(q) ||
+                                    (p.varis_yeri || '').toLowerCase().includes(q);
+                            });
+                        }
+                        return arr;
+                    },
+                    filteredLearned: function () {
+                        var arr = this.learnedPrices.slice();
+                        if (this.search) {
+                            var q = this.search.toLowerCase();
+                            arr = arr.filter(function (l) {
+                                return (l.kalkis_bolgesi || '').toLowerCase().includes(q) ||
+                                    (l.varis_yeri || '').toLowerCase().includes(q);
+                            });
+                        }
+                        return arr;
+                    },
+                    avgScore: function () {
+                        var scored = this.calls.filter(function (c) { return c.genel_puan > 0; });
+                        if (!scored.length) return '0.0';
+                        return (scored.reduce(function (s, c) { return s + c.genel_puan; }, 0) / scored.length).toFixed(1);
+                    },
+                    totalRevenue: function () {
+                        var total = this.calls.reduce(function (s, c) { return s + (c.ucret || 0); }, 0);
+                        if (total === 0) total = this.learnedPrices.reduce(function (s, l) { return s + (l.fiyat || 0); }, 0);
+                        return total.toLocaleString('tr-TR');
+                    },
+                    todayCalls: function () {
+                        var today = new Date().toISOString().slice(0, 10);
+                        return this.calls.filter(function (c) { return (c.created_at || '').slice(0, 10) === today; }).length;
+                    },
+                    aiHotZones: function () {
+                        var counts = {};
+                        this.learnedPrices.forEach(function (l) { var k = l.kalkis_bolgesi; if (k && k !== 'Bilinmiyor') counts[k] = (counts[k] || 0) + 1; });
+                        this.calls.forEach(function (c) { var k = c.kalkis_yeri; if (k && k !== 'null' && k !== '') counts[k] = (counts[k] || 0) + 1; });
+                        var max = Math.max.apply(null, Object.values(counts).concat([1]));
+                        return Object.entries(counts).sort(function (a, b) { return b[1] - a[1]; }).map(function (e) { return { name: e[0], count: e[1], pct: Math.round(e[1] / max * 100) }; });
+                    },
+                    aiReturns: function () {
+                        var telCounts = {};
+                        this.calls.forEach(function (c) {
+                            if (c.musteri_telefon) {
+                                if (!telCounts[c.musteri_telefon]) telCounts[c.musteri_telefon] = [];
+                                telCounts[c.musteri_telefon].push(c);
+                            }
+                        });
+                        return Object.entries(telCounts).filter(function (e) { return e[1].length >= 2; }).map(function (e) {
+                            var arr = e[1].sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+                            var diff = Math.max(1, Math.round((new Date(arr[0].created_at) - new Date(arr[1].created_at)) / 86400000));
+                            var rota = (arr[0].kalkis_yeri || '?') + ' → ' + (arr[0].varis_yeri || '?');
+                            return { tel: e[0], gun: diff, rota: rota };
+                        }).sort(function (a, b) { return a.gun - b.gun; }).slice(0, 20);
+                    },
+                    aiHourly: function () {
+                        var hr = {};
+                        this.calls.forEach(function (c) {
+                            if (!c.created_at) return;
+                            var h = new Date(c.created_at).getHours();
+                            var r = c.kalkis_yeri || 'Bilinmiyor';
+                            if (r === 'Bilinmiyor' || !r) return;
+                            var key = h + '-' + r;
+                            if (!hr[key]) hr[key] = { hour: h, region: r, count: 0 };
+                            hr[key].count++;
+                        });
+                        return Object.values(hr).sort(function (a, b) { return b.count - a.count; });
+                    },
+                    aiErrors: function () {
+                        var types = {};
+                        this.calls.forEach(function (c) {
+                            var ders = c.asistan_icin_ders || '';
+                            if (!ders || ders.length < 5 || ders === 'Hata yok.') return;
+                            var kws = ['hızlı', 'yavaş', 'fiyat', 'adres', 'isim', 'teyit', 'anlama', 'robot'];
+                            kws.forEach(function (kw) {
+                                if (ders.toLowerCase().includes(kw)) {
+                                    var label = kw.charAt(0).toUpperCase() + kw.slice(1) + ' hatası';
+                                    types[label] = (types[label] || 0) + 1;
+                                }
+                            });
+                        });
+                        return Object.entries(types).sort(function (a, b) { return b[1] - a[1]; }).map(function (e) { return { type: e[0], count: e[1] }; });
+                    }
+                },
+                watch: {
+                    tab: function (newTab) {
+                        if (newTab === 'reports') {
+                            var self = this;
+                            this.$nextTick(function () { setTimeout(function () { self.renderCharts(); }, 150); });
+                        }
+                    }
+                },
+                methods: {
+                    formatDate: function (d) {
+                        if (!d) return '-';
+                        try { return new Date(d).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (e) { return '-'; }
+                    },
+                    playAudio: function (url) {
+                        if (!url) return;
+                        try { var a = new Audio(url); a.play(); } catch (e) { window.open(url, '_blank'); }
+                    },
+                    toggleTheme: function () {
+                        this.isDark = !this.isDark;
+                        document.body.classList.toggle('light', !this.isDark);
+                        localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
+                        if (this.tab === 'reports') { var self = this; this.$nextTick(function () { self.renderCharts(); }); }
+                    },
+                    loadData: async function () {
+                        this.status = 'Yükleniyor...';
+                        try {
+                            var results = await Promise.all([
+                                safeQuery('cagri_kalite_raporlari', { order: 'created_at', limit: 500 }),
+                                safeQuery('musteri_profili', { order: 'created_at', limit: 500 }),
+                                safeQuery('transfer_fiyatlari', { order: 'kalkis_bolgesi', asc: true, limit: 3000 }),
+                                safeQuery('ogrenilen_fiyatlar', { order: 'created_at', limit: 1000 })
+                            ]);
+                            this.calls = results[0];
+                            this.customers = results[1];
+                            this.fixedPrices = results[2];
+                            this.learnedPrices = results[3];
+                            console.log('Yüklendi:', this.calls.length, 'çağrı,', this.customers.length, 'müşteri,', this.fixedPrices.length, 'fiyat,', this.learnedPrices.length, 'öğrenilen');
+                            this.status = sb ? 'Canlı' : 'Offline';
+                        } catch (e) {
+                            console.error('Veri hatası:', e);
+                            this.status = 'Hata!';
+                        }
+                    },
+                    renderCharts: function () {
+                        Object.values(chartInstances).forEach(function (c) { try { c.destroy(); } catch (e) { } });
+                        chartInstances = {};
+                        if (typeof Chart === 'undefined') return;
+
+                        var textColor = this.isDark ? '#94a3b8' : '#475569';
+                        var gridColor = this.isDark ? 'rgba(51,65,85,.3)' : 'rgba(203,213,225,.5)';
+                        var defaults = {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { labels: { color: textColor, font: { family: 'Inter', size: 11 } } } },
+                            scales: { x: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }, y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } } }
+                        };
+
+                        // Score
+                        var scores = [0, 0, 0, 0, 0];
+                        this.calls.forEach(function (c) { var p = c.genel_puan || 0; if (p <= 2) scores[0]++; else if (p <= 4) scores[1]++; else if (p <= 6) scores[2]++; else if (p <= 8) scores[3]++; else scores[4]++; });
+                        var el1 = document.getElementById('scoreChart');
+                        if (el1) chartInstances.score = new Chart(el1.getContext('2d'), { type: 'bar', data: { labels: ['1-2', '3-4', '5-6', '7-8', '9-10'], datasets: [{ label: 'Çağrı', data: scores, backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4'], borderRadius: 8, borderSkipped: false }] }, options: Object.assign({}, defaults, { plugins: { legend: { display: false } } }) });
+
+                        // Region
+                        var rc = {};
+                        this.learnedPrices.forEach(function (l) { var k = l.kalkis_bolgesi; if (k && k !== 'Bilinmiyor') rc[k] = (rc[k] || 0) + 1; });
+                        var tr = Object.entries(rc).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 8);
+                        var el2 = document.getElementById('regionChart');
+                        if (el2 && tr.length) chartInstances.region = new Chart(el2.getContext('2d'), { type: 'doughnut', data: { labels: tr.map(function (r) { return r[0]; }), datasets: [{ data: tr.map(function (r) { return r[1]; }), backgroundColor: ['#06b6d4', '#8b5cf6', '#f59e0b', '#22c55e', '#ef4444', '#ec4899', '#14b8a6', '#6366f1'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor, font: { family: 'Inter', size: 10 }, padding: 8, usePointStyle: true } } } } });
+
+                        // Hourly
+                        var hourly = new Array(24).fill(0);
+                        this.calls.forEach(function (c) { if (c.created_at) hourly[new Date(c.created_at).getHours()]++; });
+                        var el3 = document.getElementById('hourlyChart');
+                        if (el3) chartInstances.hourly = new Chart(el3.getContext('2d'), { type: 'line', data: { labels: hourly.map(function (_, i) { return i + ':00'; }), datasets: [{ label: 'Çağrı', data: hourly, borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,.15)', fill: true, tension: .4, pointRadius: 2 }] }, options: defaults });
+
+                        // Revenue
+                        var dr = {};
+                        this.learnedPrices.forEach(function (l) { var d = (l.created_at || l.tarih || '').slice(0, 10); if (d) dr[d] = (dr[d] || 0) + (l.fiyat || 0); });
+                        var last14 = Object.entries(dr).sort(function (a, b) { return a[0].localeCompare(b[0]); }).slice(-14);
+                        var el4 = document.getElementById('revenueChart');
+                        if (el4 && last14.length) chartInstances.revenue = new Chart(el4.getContext('2d'), { type: 'bar', data: { labels: last14.map(function (d) { return d[0].slice(5); }), datasets: [{ label: 'Gelir (₺)', data: last14.map(function (d) { return d[1]; }), backgroundColor: 'rgba(139,92,246,.6)', borderRadius: 6, borderSkipped: false }] }, options: defaults });
+                    }
+                },
+                mounted: async function () {
+                    if (localStorage.getItem('theme') === 'light') { this.isDark = false; document.body.classList.add('light'); }
+                    try { await this.loadData(); } catch (e) { console.error('Init error:', e); this.status = 'Hata!'; }
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('app').style.display = 'block';
+
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.register('/sw.js')
+                            .then(() => console.log('Uygulama Motoru Aktif!'))
+                            .catch(() => console.warn('Uygulama Motoru çalışmadı.'));
+                    }
+                }
+            });
+            vueApp.mount('#app');
+        })();
+    </script>
+</body>
+
+</html>
