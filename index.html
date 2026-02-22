@@ -448,6 +448,7 @@
                 padding-bottom: 80px;
             }
 
+
             .bottom-nav {
                 display: flex;
                 justify-content: space-around;
@@ -457,8 +458,22 @@
                 grid-template-columns: 1fr 1fr;
             }
 
+            .grid-3,
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
             .search-input {
                 width: 120px;
+            }
+
+            .data-table {
+                min-width: 600px;
+            }
+
+            input,
+            textarea {
+                font-size: 16px !important;
             }
 
             .modal-body {
@@ -477,7 +492,8 @@
     </div>
 
     <!-- APP -->
-    <audio id="ringtone_audio" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+    <audio id="ringtone_audio" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+        preload="auto"></audio>
     <div id="app" style="display:none">
         <div class="app-container">
 
@@ -591,7 +607,8 @@
                                 <tr v-for="c in filteredCalls" :key="c.id" @click="selectedCall=c"
                                     style="cursor:pointer">
                                     <td>{{formatDate(c.created_at)}}</td>
-                                    <td class="fw-700" @click.stop="copyText(c.musteri_telefon)" style="cursor:copy">{{c.musteri_telefon||'-'}} 📋</td>
+                                    <td class="fw-700" @click.stop="copyText(c.musteri_telefon)" style="cursor:copy">
+                                        {{c.musteri_telefon||'-'}} 📋</td>
                                     <td><span style="color:var(--accent)">{{c.kalkis_yeri||'-'}}</span></td>
                                     <td><span style="color:var(--accent3)">{{c.varis_yeri||'-'}}</span></td>
                                     <td class="fw-700" style="color:var(--success)">{{c.ucret ? c.ucret+'₺' : '-'}}</td>
@@ -1087,7 +1104,7 @@
                     }
                 },
                 watch: {
-                    tab: function(val) { window.location.hash = val; },
+                    tab: function (val) { window.location.hash = val; },
                     tab: function (newTab) {
                         if (newTab === 'reports') {
                             var self = this;
@@ -1096,18 +1113,18 @@
                     }
                 },
                 methods: {
-                    saveLearned: async function(l) {
-                        if(!sb) return;
+                    saveLearned: async function (l) {
+                        if (!sb) return;
                         await sb.from('ogrenilen_fiyatlar').update({ kalkis_bolgesi: l.kalkis_bolgesi, varis_yeri: l.varis_yeri, fiyat: l.fiyat }).eq('id', l.id);
                         alert('Öğrenilen Fiyat Kaydedildi!');
                     },
-                    applyBulkPrice: async function() {
-                        if(!this.bulkPriceAmount || !sb) return;
-                        if(confirm('Tüm filtrelenmiş ("' + this.search + '") '+ this.filteredPrices.length + ' rotaya ' + this.bulkPriceAmount + ' TL eklenecek. Onaylıyor musunuz?')) {
+                    applyBulkPrice: async function () {
+                        if (!this.bulkPriceAmount || !sb) return;
+                        if (confirm('Tüm filtrelenmiş ("' + this.search + '") ' + this.filteredPrices.length + ' rotaya ' + this.bulkPriceAmount + ' TL eklenecek. Onaylıyor musunuz?')) {
                             this.status = 'Kaydediliyor...';
-                            for(let i=0; i<this.filteredPrices.length; i++) {
+                            for (let i = 0; i < this.filteredPrices.length; i++) {
                                 let p = this.filteredPrices[i];
-                                let newPrice = (p.fiyat||0) + this.bulkPriceAmount;
+                                let newPrice = (p.fiyat || 0) + this.bulkPriceAmount;
                                 await sb.from('transfer_fiyatlari').update({ fiyat: newPrice }).eq('id', p.id);
                                 p.fiyat = newPrice;
                             }
@@ -1115,16 +1132,16 @@
                             alert('Güncelleme Tamamlandı.');
                         }
                     },
-                    savePrice: async function(p) {
-                        if(!sb) return;
+                    savePrice: async function (p) {
+                        if (!sb) return;
                         await sb.from('transfer_fiyatlari').update({ kalkis_bolgesi: p.kalkis_bolgesi, varis_yeri: p.varis_yeri, fiyat: p.fiyat }).eq('id', p.id);
                         alert('Kaydedildi');
                     },
-                    copyText: function(text) {
-                        if(!text) return;
-                        navigator.clipboard.writeText(text).then(function() { alert('Kopyalandı: ' + text); }).catch(function(){});
+                    copyText: function (text) {
+                        if (!text) return;
+                        navigator.clipboard.writeText(text).then(function () { alert('Kopyalandı: ' + text); }).catch(function () { });
                     },
-                    saveCall: async function() {
+                    saveCall: async function () {
                         if (!this.selectedCall || !sb) return;
                         try {
                             const { error } = await sb.from('cagri_kalite_raporlari').update({
@@ -1135,12 +1152,12 @@
                                 konusma_ozeti: this.selectedCall.konusma_ozeti,
                                 asistan_icin_ders: this.selectedCall.asistan_icin_ders
                             }).eq('id', this.selectedCall.id);
-                            if(error) throw error;
+                            if (error) throw error;
                             alert('Çağrı güncellendi!');
                             this.selectedCall = null;
-                        } catch(e) { alert('Hata: ' + JSON.stringify(e)); }
+                        } catch (e) { alert('Hata: ' + JSON.stringify(e)); }
                     },
-                    saveCustomer: async function() {
+                    saveCustomer: async function () {
                         if (!this.selectedCustomer || !sb) return;
                         try {
                             const { error } = await sb.from('musteri_profili').update({
@@ -1148,10 +1165,10 @@
                                 ozel_notlar: this.selectedCustomer.ozel_notlar,
                                 asistan_notu: this.selectedCustomer.asistan_notu
                             }).eq('id', this.selectedCustomer.id);
-                            if(error) throw error;
+                            if (error) throw error;
                             alert('Müşteri güncellendi!');
                             this.selectedCustomer = null;
-                        } catch(e) { alert('Hata: ' + JSON.stringify(e)); }
+                        } catch (e) { alert('Hata: ' + JSON.stringify(e)); }
                     },
                     formatDate: function (d) {
                         if (!d) return '-';
