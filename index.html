@@ -961,7 +961,7 @@
                         tab: window.location.hash.replace('#', '') || 'calls',
                         ringtoneEnabled: true,
                         startDate: '',
-                        endDate: '',
+                        endDate: '', bulkPriceAmount: null,
                         search: '',
                         isDark: true,
                         status: 'Bağlanıyor...',
@@ -1096,6 +1096,30 @@
                     }
                 },
                 methods: {
+                    saveLearned: async function(l) {
+                        if(!sb) return;
+                        await sb.from('ogrenilen_fiyatlar').update({ kalkis_bolgesi: l.kalkis_bolgesi, varis_yeri: l.varis_yeri, fiyat: l.fiyat }).eq('id', l.id);
+                        alert('Öğrenilen Fiyat Kaydedildi!');
+                    },
+                    applyBulkPrice: async function() {
+                        if(!this.bulkPriceAmount || !sb) return;
+                        if(confirm('Tüm filtrelenmiş ("' + this.search + '") '+ this.filteredPrices.length + ' rotaya ' + this.bulkPriceAmount + ' TL eklenecek. Onaylıyor musunuz?')) {
+                            this.status = 'Kaydediliyor...';
+                            for(let i=0; i<this.filteredPrices.length; i++) {
+                                let p = this.filteredPrices[i];
+                                let newPrice = (p.fiyat||0) + this.bulkPriceAmount;
+                                await sb.from('transfer_fiyatlari').update({ fiyat: newPrice }).eq('id', p.id);
+                                p.fiyat = newPrice;
+                            }
+                            this.status = 'Tamamlandı!';
+                            alert('Güncelleme Tamamlandı.');
+                        }
+                    },
+                    savePrice: async function(p) {
+                        if(!sb) return;
+                        await sb.from('transfer_fiyatlari').update({ kalkis_bolgesi: p.kalkis_bolgesi, varis_yeri: p.varis_yeri, fiyat: p.fiyat }).eq('id', p.id);
+                        alert('Kaydedildi');
+                    },
                     copyText: function(text) {
                         if(!text) return;
                         navigator.clipboard.writeText(text).then(function() { alert('Kopyalandı: ' + text); }).catch(function(){});
