@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dogus-panel-v2';
+const CACHE_NAME = 'dogus-panel-v3';
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
